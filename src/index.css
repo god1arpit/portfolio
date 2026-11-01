@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+}
+
+html { 
+  scroll-behavior: smooth; 
+}
+
+body {
+  margin: 0;
+  background: #09090b;
+  color: #f4f4f6;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+
+::selection {
+  background: rgba(229, 185, 90, 0.3);
+  color: #fff9e6;
+}
+
+/* Custom Smooth Dark Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* Luxury Metallic Gold Gradient Text */
+.gradient-text {
+  background: linear-gradient(135deg, #ffffff 0%, #fcedc5 22%, #e5b95a 50%, #b8860b 80%, #825b04 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 24px rgba(229, 185, 90, 0.25));
+}
+
+.grid-bg {
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0);
+  background-size: 32px 32px;
+}
+
+/* Ambient Radial Glow */
+.ambient-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(140px);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Luxury Metallic Buttons */
+.btn-premium-primary {
+  background: linear-gradient(180deg, #fcedc5 0%, #e5b95a 52%, #c99324 100%);
+  color: #0c0a07;
+  font-weight: 600;
+  box-shadow: 0 0 20px rgba(229, 185, 90, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.8), inset 0 -1px 2px rgba(0, 0, 0, 0.35);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-premium-primary:hover {
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 0 0 30px rgba(229, 185, 90, 0.48), inset 0 1px 1px rgba(255, 255, 255, 0.95), inset 0 -1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.btn-premium-primary:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.btn-premium-secondary {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(229, 185, 90, 0.22);
+  color: #e4e4e7;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-premium-secondary:hover {
+  background: rgba(229, 185, 90, 0.08);
+  border-color: rgba(229, 185, 90, 0.55);
+  color: #ffffff;
+  box-shadow: 0 0 22px rgba(229, 185, 90, 0.18);
+  transform: translateY(-1px);
+}
+
+.btn-premium-secondary:active {
+  transform: translateY(1px) scale(0.98);
+}
