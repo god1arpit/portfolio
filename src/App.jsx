@@ -1,5 +1,5 @@
 import { motion, useScroll } from 'framer-motion'
-import { Mail, Phone, MapPin, ExternalLink, Award, Briefcase, Code2, GraduationCap } from 'lucide-react'
+import { Mail, Phone, MapPin, ExternalLink, Award, Briefcase, Code2, GraduationCap, Download } from 'lucide-react'
 import ProximityHover from './ProximityHover'
 import MagicCursor from './MagicCursor'
 import Tiles from './Tiles'
@@ -519,6 +519,19 @@ export default function App() {
                 </span>
               </motion.a>
             ))}
+
+            <motion.a
+              href="/Arpit_Sachdeva_Resume.pdf"
+              download="Arpit_Sachdeva_Resume.pdf"
+              target="_blank"
+              rel="noreferrer"
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              className="h-13 md:h-14 px-5 md:px-6 rounded-full border border-amber-400/40 bg-gradient-to-r from-amber-500/15 via-amber-400/20 to-amber-500/15 hover:border-amber-300 hover:from-amber-400/25 hover:to-amber-300/25 text-amber-200 font-medium text-xs md:text-sm tracking-wider uppercase flex items-center gap-2.5 transition-all duration-300 shadow-[0_6px_20px_rgba(223,172,67,0.18)] hover:shadow-[0_0_28px_rgba(223,172,67,0.4)]"
+            >
+              <Download size={17} className="text-amber-300" />
+              <span>Download Resume</span>
+            </motion.a>
           </div>
         </motion.div>
       </Section>
