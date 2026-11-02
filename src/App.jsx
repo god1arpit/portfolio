@@ -144,8 +144,15 @@ const projects = [
     name: 'BuildTrack',
     tag: 'Construction Management Platform',
     stack: 'React, Node, Express, Python, FastAPI',
-    desc: 'Multi-role platform (builder / supervisor / labour) with attendance tracking, automated wage engine, expense management and site photo reporting. JWT auth with RBAC; fixed a role-escalation vulnerability on public registration.',
+    desc: 'Multi-role platform (builder / supervisor / labour) with attendance tracking, automated wage engine, expense management and site photo reporting. JWT auth with RBAC; fixed a role-escalation vulnerability on public registration. Road-inspection AI module: segmentation model trained on the IIIT Hyderabad IDD and Mapillary Vistas datasets.',
     link: 'https://buildtrack-ai.vercel.app',
+  },
+  {
+    name: 'Netflix Content Recommender',
+    tag: 'Machine Learning',
+    stack: 'Python, TF-IDF, Cosine Similarity',
+    desc: 'Content-based recommender built during the Auspify ML internship, using TF-IDF + cosine similarity over 8,790 Netflix titles; 93% of recommendations share a genre with the query title.',
+    link: null,
   },
   {
     name: 'HYDRO GUARD',
