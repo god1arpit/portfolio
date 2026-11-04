@@ -1,0 +1,59 @@
+# llms.txt — https://arpitsachdeva.is-a.dev
+
+This file provides a factual, structured summary of this website for language models and automated tools. It is an informative index and does not serve as a search engine ranking mechanism or guarantee of search positioning.
+
+## What This Site Is
+The personal portfolio website of Arpit Sachdeva, hosted at https://arpitsachdeva.is-a.dev. It is a single-page web application presenting his education, projects, technical skills, certifications, work experience, and contact channels.
+
+## Who Arpit Sachdeva Is
+- 3rd-year B.E. Computer Science and Engineering student specializing in Artificial Intelligence & Machine Learning at Chandigarh University (Class of 2028).
+- Full-stack developer building web applications and real-time systems using React, Node.js, Express, Socket.io, Python, and FastAPI.
+- Machine Learning Intern at Auspify Technologies (Remote, Oct 2026 – Present).
+- Patent Applicant with the Indian Patent Office (App No. 202511113771, filed November 2025) for an IoT-based automated water overflow controller ("HYDRO GUARD").
+- Competitive Programmer with 162+ LeetCode problems solved (including 25 Hard and 77 Medium) and 100 Days Badge (2026).
+- Location: Chandigarh, India.
+- Email: arpitsachdeva9999@gmail.com | Phone: +91 8572092552.
+
+## Projects Listed on the Site
+1. YouTube Remote Control System
+   - Type: Full-Stack Web App
+   - Tech Stack: React, Vite, Node.js, Express, Socket.io, Google OAuth 2.0, YouTube Data API v3
+   - Description: Real-time remote control web app to search, play, and pause YouTube across desktop and mobile with WebSocket live sync, QR-code device pairing, and LAN IP detection.
+   - Code: https://github.com/god1arpit/youtube-controler
+
+2. BuildTrack
+   - Type: Construction Management Platform
+   - Tech Stack: React, Node.js, Express, Python, FastAPI
+   - Description: Multi-role platform (builder / supervisor / labour) with attendance tracking, automated wage engine, expense management, site photo reporting, and JWT auth with RBAC (fixed a role-escalation vulnerability on public registration). Includes a road-inspection AI module (segmentation model trained on IIIT Hyderabad IDD and Mapillary Vistas datasets).
+   - Live: https://buildtrack-ai.vercel.app
+
+3. Netflix Content Recommender
+   - Type: Machine Learning
+   - Tech Stack: Python, TF-IDF, Cosine Similarity
+   - Description: Content-based recommender built during the Auspify ML internship, using TF-IDF + cosine similarity over 8,790 Netflix titles; 93% of recommendations share a genre with the query title.
+
+4. HYDRO GUARD
+   - Type: IoT & Automation (Patent Filed)
+   - Tech Stack: IoT, Automation, Sensors, C++
+   - Description: Smart IoT-based automated water overflow control for reservoirs. Patent application filed with the Indian Patent Office (App No. 202511113771), November 2025.
+
+5. Collegia App Redesign
+   - Type: UI/UX Redesign
+   - Tech Stack: Figma, Design System
+   - Description: Redesign of the Collegia app interface with user flows for attendance, marks, CGPA, and timetable tracking.
+
+## Technical Skills
+- Languages: C, C++, Python, JavaScript, HTML, CSS
+- Frameworks & Libraries: React.js, Node.js, Express.js, Socket.io, Tailwind CSS, FastAPI
+- Tools & APIs: Git, REST APIs, MySQL, Google OAuth 2.0, YouTube Data API v3
+- Concepts & Architecture: Data Visualization, Generative AI, Prompt Engineering, JWT Authentication, WebSockets
+
+## Main Pages and Resources
+- Portfolio Homepage: https://arpitsachdeva.is-a.dev/
+- Resume PDF: https://arpitsachdeva.is-a.dev/Arpit_Sachdeva_Resume.pdf
+
+## External Profiles
+- GitHub: https://github.com/god1arpit
+- LinkedIn: https://linkedin.com/in/arpit-sachdeva0001
+- LeetCode: https://leetcode.com/u/god_arpit/
+- Instagram: https://www.instagram.com/arpit_sachdeva9999/?hl=en
