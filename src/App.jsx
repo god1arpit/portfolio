@@ -2,14 +2,30 @@ import { useState, useEffect } from 'react'
 import { motion, useScroll, AnimatePresence } from 'framer-motion'
 import { 
   Mail, Phone, MapPin, ExternalLink, Award, Briefcase, Code2, GraduationCap, 
-  Download, Check, Copy, Send, Sparkles, CheckCircle2, ChevronRight 
+  Download, Check, Copy, Send, Sparkles, CheckCircle2, Eye, EyeOff, AlertCircle
 } from 'lucide-react'
 import ProximityHover from './ProximityHover'
 import MagicCursor from './MagicCursor'
 import Tiles from './Tiles'
 import PhotoScrollSlide from './PhotoScrollSlide'
 import TechText from './TechText'
+import { CONFIG } from './config'
 import './index.css'
+
+const CURRENT_YEAR = new Date().getFullYear()
+
+function maskEmail(email) {
+  if (!email || !email.includes('@')) return '•••••@•••••.•••'
+  const [user, domain] = email.split('@')
+  const visible = user.slice(0, 3)
+  return `${visible}••••••@${domain}`
+}
+
+function maskPhone(phone) {
+  if (!phone || phone.length < 4) return '••••••••••'
+  const visible = phone.slice(-3)
+  return `+91 ••••• ••${visible}`
+}
 
 function GithubIcon({ size = 16, className = "" }) {
   return (
@@ -120,13 +136,55 @@ function CopyButton({ text, label = "Copy" }) {
 }
 
 function ContactForm() {
-  const [status, setStatus] = useState('idle')
-  const [form, setForm] = useState({ name: '', email: '', message: '' })
+  const [status, setStatus] = useState('idle') // 'idle' | 'loading' | 'success' | 'error'
+  const [errorMessage, setErrorMessage] = useState('')
+  const [lastSubmitTime, setLastSubmitTime] = useState(0)
+  const [form, setForm] = useState({ name: '', email: '', message: '', botcheck: false })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.name || !form.email || !form.message) return
+
+    // 1. Anti-spam honeypot verification
+    if (form.botcheck) {
+      setStatus('success')
+      setForm({ name: '', email: '', message: '', botcheck: false })
+      return
+    }
+
+    // 2. Client-side rate limiting / submit cooldown (15 seconds)
+    const now = Date.now()
+    if (lastSubmitTime && now - lastSubmitTime < 15000) {
+      setErrorMessage('Please wait a moment before sending another message.')
+      setStatus('error')
+      return
+    }
+
+    // 3. Input trimming & length validation (CWE-20 / DoS mitigation)
+    const trimmedName = form.name.trim()
+    const trimmedEmail = form.email.trim()
+    const trimmedMessage = form.message.trim()
+
+    if (!trimmedName || !trimmedEmail || !trimmedMessage) {
+      setErrorMessage('Please fill in all required fields.')
+      setStatus('error')
+      return
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(trimmedEmail)) {
+      setErrorMessage('Please enter a valid email address.')
+      setStatus('error')
+      return
+    }
+
+    if (trimmedName.length > 100 || trimmedEmail.length > 254 || trimmedMessage.length > 3000) {
+      setErrorMessage('Input exceeds maximum allowed length.')
+      setStatus('error')
+      return
+    }
+
     setStatus('loading')
+    setErrorMessage('')
 
     try {
       const res = await fetch('https://api.web3forms.com/submit', {
@@ -136,31 +194,50 @@ function ContactForm() {
           Accept: 'application/json',
         },
         body: JSON.stringify({
-          access_key: '5615d8d2-4464-4e4b-97e3-057bfdf834ae',
-          name: form.name,
-          email: form.email,
-          message: form.message,
+          access_key: CONFIG.web3FormsAccessKey,
+          name: trimmedName,
+          email: trimmedEmail,
+          message: trimmedMessage,
           from_name: 'Portfolio Contact Form',
-          subject: `Portfolio Inquiry from ${form.name}`,
+          subject: `Portfolio Inquiry from ${trimmedName}`,
         }),
       })
 
       const data = await res.json()
       if (data && data.success) {
         setStatus('success')
-        setForm({ name: '', email: '', message: '' })
+        setLastSubmitTime(Date.now())
+        setForm({ name: '', email: '', message: '', botcheck: false })
       } else {
-        window.location.href = `mailto:arpitsachdeva9999@gmail.com?subject=Portfolio%20Inquiry%20from%20${encodeURIComponent(form.name)}&body=${encodeURIComponent(form.message + '\n\nFrom: ' + form.email)}`
-        setStatus('success')
+        throw new Error(data?.message || 'Submission failed')
       }
     } catch {
-      window.location.href = `mailto:arpitsachdeva9999@gmail.com?subject=Portfolio%20Inquiry%20from%20${encodeURIComponent(form.name)}&body=${encodeURIComponent(form.message + '\n\nFrom: ' + form.email)}`
-      setStatus('success')
+      setStatus('error')
+      setErrorMessage('Direct submission could not be completed. You can send an email directly using the button below.')
     }
+  }
+
+  const handleMailtoFallback = () => {
+    const subject = encodeURIComponent(`Portfolio Inquiry from ${form.name.trim() || 'Visitor'}`)
+    const body = encodeURIComponent(`${form.message.trim()}\n\nFrom: ${form.name.trim()} (${form.email.trim()})`)
+    window.location.href = `mailto:${CONFIG.contactEmail}?subject=${subject}&body=${body}`
   }
 
   return (
     <form onSubmit={handleSubmit} className="mt-8 text-left max-w-xl mx-auto space-y-4">
+      {/* Honeypot field for bot protection (invisible to genuine users) */}
+      <input
+        type="checkbox"
+        name="botcheck"
+        checked={form.botcheck}
+        onChange={(e) => setForm({ ...form, botcheck: e.target.checked })}
+        className="hidden"
+        style={{ display: 'none' }}
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+      />
+
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-stone-400 mb-1.5">
@@ -169,6 +246,7 @@ function ContactForm() {
           <input
             type="text"
             required
+            maxLength={100}
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="e.g. Alex Smith"
@@ -182,6 +260,7 @@ function ContactForm() {
           <input
             type="email"
             required
+            maxLength={254}
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
             placeholder="alex@company.com"
@@ -190,18 +269,44 @@ function ContactForm() {
         </div>
       </div>
       <div>
-        <label className="block text-xs font-semibold uppercase tracking-wider text-stone-400 mb-1.5">
-          Your Message
-        </label>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-stone-400">
+            Your Message
+          </label>
+          <span className="text-[11px] text-stone-500">
+            {form.message.length}/3000
+          </span>
+        </div>
         <textarea
           required
           rows={4}
+          maxLength={3000}
           value={form.message}
           onChange={(e) => setForm({ ...form, message: e.target.value })}
           placeholder="Hi Arpit, let's discuss an internship, collaboration, or project opportunity..."
           className="w-full px-4 py-3 rounded-2xl bg-[#09090d]/80 border border-white/[0.1] focus:border-amber-400/60 focus:bg-amber-400/[0.03] text-stone-100 placeholder-stone-600 text-sm outline-none transition-all resize-none shadow-inner"
         />
       </div>
+
+      {status === 'error' && (
+        <motion.div
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-3.5 rounded-2xl bg-amber-500/[0.08] border border-amber-500/30 text-xs text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+        >
+          <div className="flex items-center gap-2">
+            <AlertCircle size={16} className="text-amber-400 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleMailtoFallback}
+            className="px-3 py-1.5 rounded-full bg-amber-400/20 hover:bg-amber-400/30 border border-amber-400/40 text-[11px] font-semibold text-amber-100 whitespace-nowrap transition cursor-pointer"
+          >
+            Open Mail Client
+          </button>
+        </motion.div>
+      )}
 
       <div className="flex items-center justify-between flex-wrap gap-3 pt-2">
         <button
@@ -247,7 +352,7 @@ const socialLinks = [
   },
   {
     name: 'Email',
-    href: 'mailto:arpitsachdeva9999@gmail.com',
+    href: `mailto:${CONFIG.contactEmail}`,
     icon: MinimalMailIcon,
   },
   {
@@ -423,6 +528,7 @@ export default function App() {
   const { scrollYProgress } = useScroll()
   const [activeSection, setActiveSection] = useState('about')
   const [activeCategory, setActiveCategory] = useState('All')
+  const [showContactDetails, setShowContactDetails] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -573,7 +679,7 @@ export default function App() {
           <a
             href="https://github.com/god1arpit"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="px-5 py-2.5 rounded-full btn-premium-primary flex items-center gap-2"
           >
             <GithubIcon size={16} /> GitHub
@@ -581,7 +687,7 @@ export default function App() {
           <a
             href="https://linkedin.com/in/arpit-sachdeva0001"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="px-5 py-2.5 rounded-full btn-premium-secondary flex items-center gap-2"
           >
             <LinkedinIcon size={16} /> LinkedIn
@@ -589,13 +695,13 @@ export default function App() {
           <a
             href="https://leetcode.com/u/god_arpit/"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="px-5 py-2.5 rounded-full btn-premium-secondary flex items-center gap-2"
           >
             <LeetcodeIcon size={16} /> LeetCode
           </a>
           <a
-            href="mailto:arpitsachdeva9999@gmail.com"
+            href={`mailto:${CONFIG.contactEmail}`}
             className="px-5 py-2.5 rounded-full btn-premium-secondary flex items-center gap-2"
           >
             <Mail size={16} /> Email
@@ -662,19 +768,47 @@ export default function App() {
           <motion.div {...fadeUp(0.2)} className="p-8 rounded-3xl bg-[#0f0f14]/75 border border-white/[0.08] backdrop-blur-md flex flex-col gap-4 text-sm text-stone-300 shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:border-amber-500/30 transition-all duration-300">
             <div className="flex items-center gap-3"><MapPin size={16} className="text-amber-400 shrink-0" /> Chandigarh, India</div>
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3"><Phone size={16} className="text-amber-400 shrink-0" /> 8572092552</div>
-              <CopyButton text="8572092552" label="Copy" />
+              <div className="flex items-center gap-3">
+                <Phone size={16} className="text-amber-400 shrink-0" />
+                <span className="font-mono text-xs md:text-sm">
+                  {showContactDetails ? CONFIG.contactPhone : maskPhone(CONFIG.contactPhone)}
+                </span>
+              </div>
+              {showContactDetails && <CopyButton text={CONFIG.contactPhone} label="Copy" />}
             </div>
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 truncate"><Mail size={16} className="text-amber-400 shrink-0" /> <span className="truncate">arpitsachdeva9999@gmail.com</span></div>
-              <CopyButton text="arpitsachdeva9999@gmail.com" label="Copy" />
+              <div className="flex items-center gap-3 truncate">
+                <Mail size={16} className="text-amber-400 shrink-0" />
+                <span className="truncate font-mono text-xs md:text-sm">
+                  {showContactDetails ? CONFIG.contactEmail : maskEmail(CONFIG.contactEmail)}
+                </span>
+              </div>
+              {showContactDetails && <CopyButton text={CONFIG.contactEmail} label="Copy" />}
             </div>
+
+            <button
+              type="button"
+              onClick={() => setShowContactDetails((prev) => !prev)}
+              className="py-1.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 bg-amber-400/[0.07] hover:bg-amber-400/[0.15] border border-amber-400/25 text-amber-200 transition-all cursor-pointer"
+              title={showContactDetails ? "Hide contact information" : "Reveal full contact information"}
+            >
+              {showContactDetails ? (
+                <>
+                  <EyeOff size={13} /> Hide Contact Details
+                </>
+              ) : (
+                <>
+                  <Eye size={13} /> Reveal Contact Details
+                </>
+              )}
+            </button>
+
             <div className="flex items-center gap-3"><Briefcase size={16} className="text-amber-400 shrink-0" /> ML Intern @ Auspify</div>
             <div className="flex items-center gap-3"><GraduationCap size={16} className="text-amber-400 shrink-0" /> B.E. CSE (AI &amp; ML)</div>
             <a
               href="https://leetcode.com/u/god_arpit/"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="flex items-center gap-3 hover:text-amber-200 transition-colors pt-2 border-t border-white/[0.08]"
             >
               <LeetcodeIcon size={16} className="text-amber-400 shrink-0" />
@@ -750,7 +884,7 @@ export default function App() {
                       <h3 className="text-xl font-bold mt-1 text-stone-100 group-hover:text-amber-100 transition-colors">{p.name}</h3>
                     </div>
                     {p.demo && (
-                      <a href={p.demo} target="_blank" rel="noreferrer" className="text-stone-400 hover:text-amber-300 transition-colors p-1" title="Live Site">
+                      <a href={p.demo} target="_blank" rel="noopener noreferrer" className="text-stone-400 hover:text-amber-300 transition-colors p-1" title="Live Site">
                         <ExternalLink size={18} />
                       </a>
                     )}
@@ -777,7 +911,7 @@ export default function App() {
                     <a
                       href={p.github}
                       target="_blank"
-                      rel="noreferrer"
+                      rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.14] border border-white/[0.12] text-stone-200 hover:text-white transition-all shadow-sm"
                     >
                       <GithubIcon size={14} /> Source Code
@@ -787,7 +921,7 @@ export default function App() {
                     <a
                       href={p.demo}
                       target="_blank"
-                      rel="noreferrer"
+                      rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/35 text-amber-200 hover:text-amber-100 shadow-[0_0_15px_rgba(223,172,67,0.2)] transition-all"
                     >
                       <ExternalLink size={14} /> Live Platform
@@ -856,7 +990,7 @@ export default function App() {
                     <p className="text-xs text-stone-400 mt-1 pl-1">{c.desc}</p>
                   </div>
                   {c.link && (
-                    <a href={c.link} target="_blank" rel="noreferrer" className="text-stone-400 hover:text-amber-300 transition-colors shrink-0 p-1">
+                    <a href={c.link} target="_blank" rel="noopener noreferrer" className="text-stone-400 hover:text-amber-300 transition-colors shrink-0 p-1">
                       <ExternalLink size={14} />
                     </a>
                   )}
@@ -874,14 +1008,31 @@ export default function App() {
             Open to internships, collaborations and interesting projects. Send a message directly or connect via social links.
           </p>
 
-          <div className="mt-4 flex items-center justify-center gap-3">
-            <a
-              href="mailto:arpitsachdeva9999@gmail.com"
-              className="text-lg md:text-2xl font-bold text-stone-100 hover:text-amber-200 transition-colors tracking-tight"
-            >
-              arpitsachdeva9999@gmail.com
-            </a>
-            <CopyButton text="arpitsachdeva9999@gmail.com" label="Copy" />
+          <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+            {showContactDetails ? (
+              <div className="flex items-center gap-3">
+                <a
+                  href={`mailto:${CONFIG.contactEmail}`}
+                  className="text-lg md:text-2xl font-bold text-stone-100 hover:text-amber-200 transition-colors tracking-tight font-mono"
+                >
+                  {CONFIG.contactEmail}
+                </a>
+                <CopyButton text={CONFIG.contactEmail} label="Copy" />
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <span className="text-lg md:text-2xl font-bold text-stone-400 tracking-tight font-mono">
+                  {maskEmail(CONFIG.contactEmail)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowContactDetails(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-amber-200 bg-amber-400/[0.1] hover:bg-amber-400/[0.2] border border-amber-400/40 transition-all cursor-pointer"
+                >
+                  <Eye size={13} /> Reveal Email
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Direct Interactive Glassmorphic Contact Form */}
@@ -894,7 +1045,7 @@ export default function App() {
                 key={name}
                 href={href}
                 target={href.startsWith('http') ? '_blank' : undefined}
-                rel={href.startsWith('http') ? 'noreferrer' : undefined}
+                rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
                 whileHover={{ scale: 1.1, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 className="group relative w-13 h-13 md:w-14 md:h-14 rounded-full border border-white/[0.14] bg-[#0c0c10]/80 hover:border-amber-400/70 hover:bg-amber-400/[0.08] text-stone-300 hover:text-amber-200 flex items-center justify-center transition-all duration-300 shadow-[0_6px_20px_rgba(0,0,0,0.45)] hover:shadow-[0_0_24px_rgba(223,172,67,0.3)]"
@@ -911,7 +1062,7 @@ export default function App() {
               href="/Arpit_Sachdeva_Resume.pdf"
               download="Arpit_Sachdeva_Resume.pdf"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
               className="h-13 md:h-14 px-5 md:px-6 rounded-full border border-amber-400/40 bg-gradient-to-r from-amber-500/15 via-amber-400/20 to-amber-500/15 hover:border-amber-300 hover:from-amber-400/25 hover:to-amber-300/25 text-amber-200 font-medium text-xs md:text-sm tracking-wider uppercase flex items-center gap-2.5 transition-all duration-300 shadow-[0_6px_20px_rgba(223,172,67,0.18)] hover:shadow-[0_0_28px_rgba(223,172,67,0.4)]"
@@ -924,7 +1075,7 @@ export default function App() {
       </Section>
 
       <footer className="relative z-10 py-10 text-center text-stone-500 text-sm">
-        © {new Date().getFullYear()} Arpit Sachdeva · Built with React, Vite &amp; Tailwind
+        © {CURRENT_YEAR} Arpit Sachdeva · Built with React, Vite &amp; Tailwind
       </footer>
     </div>
   )
